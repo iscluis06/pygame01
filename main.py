@@ -49,19 +49,9 @@ def start_game(name):
 
     pygame.display.set_icon(poo)
 
-    running = True
+    level = 1
 
-    current_width = PooEnemy.images[0].get_width()
-    current_height = PooEnemy.images[0].get_height()
-    for y in range(5):
-        for x in range(9):
-            pos_y = 1 if y == 0  \
-                else (current_height * 2 * y)
-            pos_x = 1 if x == 0 \
-                else (current_width * 3 * x)
-            PooEnemy(pos_x, pos_y)
-            print(f"Posiciones X: {pos_x} Y: {pos_y}")
-
+    create_enemies(level)
 
     while player.alive():
         for event in pygame.event.get():
@@ -78,7 +68,7 @@ def start_game(name):
 
             screen.blit(background, (0, 0))
             enemy_group.draw(screen)
-            player_group.update()
+            player_group.update(screen=screen)
             player_group.draw(screen)
             player_missiles.draw(screen)
             collision = pygame.sprite.groupcollide(enemy_group, player_missiles, True, True)
@@ -93,10 +83,25 @@ def start_game(name):
             explosions_group.draw(screen)
             explosions_group.update()
             pygame.display.update()
+            if len(enemy_group) == 0:
+                level += 1
+                create_enemies(level)
             clock.tick(60)
         else:
             player.update()
 
+
+def create_enemies(level):
+    current_width = PooEnemy.images[0].get_width()
+    current_height = PooEnemy.images[0].get_height()
+    for y in range(5):
+        for x in range(9):
+            pos_y = 1 if y == 0 \
+                else (current_height * 2 * y)
+            pos_x = 1 if x == 0 \
+                else (current_width * 3 * x)
+            PooEnemy(pos_x, pos_y, level)
+            print(f"Posiciones X: {pos_x} Y: {pos_y}")
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
