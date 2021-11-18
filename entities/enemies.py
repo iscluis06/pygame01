@@ -5,14 +5,14 @@ class PooEnemy(Sprite):
     images = []
     containers = []
 
-    def __init__(self, pos_x, pos_y):
+    def __init__(self, pos_x, pos_y, level):
         Sprite.__init__(self, self.containers)
         self.image = self.images[0]
         self.rect = self.image.get_rect()
         self.rect.x = pos_x
         self.rect.y = pos_y
         self.enemyRight = True
-        self.accel = 8
+        self.accel = 5 * level
 
     def update(self, **kwargs):
         if (kwargs['screen']
