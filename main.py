@@ -1,132 +1,103 @@
 import os
 from typing import List
 
-import pygame, psutil
+import pygame
+from pygame.sprite import Group
 from guppy import hpy
 from pygame.surface import Surface
 
+from entities.enemies import PooEnemy
+from entities.missiles import Paper
+from entities.player import Player
+from entities.utilities import Explosion
 
-def print_hi(name):
-    #current_heap = hpy()
-    #current_heap.setrelheap()
+
+def start_game(name):
+    if pygame.get_sdl_version()[0] == 2:
+        pygame.mixer.pre_init(44100, 32, 2, 1024)
     pygame.init()
+    clock = pygame.time.Clock()
     screen = pygame.display.set_mode((800, 600))
 
-    pygame.display.set_caption("Flying shit")
+    player_group, enemy_group, player_missiles, explosions_group = Group(), Group(), Group(), Group()
+
+    # Sound loading
+    fart = pygame.mixer.Sound("./fart.wav")
+    splat = pygame.mixer.Sound("./splat.wav")
+
+    # Cargando imagenes
+    explosion = pygame.image.load("./explosion.png")
+    background = pygame.image.load("./bathroom.jpg")
+    background = pygame.transform.scale(background, (screen.get_width(), screen.get_height()))
     poo = pygame.image.load("./poo.png").convert()
-    stack = pygame.image.load("./toilet-paper-stack.png").convert()
     paper = pygame.image.load("./toilet-paper.png").convert()
-    stackX = 370
-    stackY = 480
-    enemyX, enemyY = 0, 0
-    enemyRight = True
-    increaseX = 0
-    projectile_array: list[Entity] = []
+    Explosion.images = [explosion]
+    PooEnemy.images = [poo]
+    Player.images = [pygame.image.load("./toilet-paper-stack.png").convert(paper)]
+    Paper.images = [pygame.transform.scale(paper,(38, 38))]
+
+    Paper.sound = fart
+    Player.sound = splat
+
+    Explosion.containers = explosions_group
+    Player.containers = player_group
+    Paper.containers = player_missiles
+    PooEnemy.containers = enemy_group
+
+    pygame.display.set_caption("Flying shit")
+    player = Player(370, 480)
+
     pygame.display.set_icon(poo)
 
     running = True
-    enemy_array: list[list[Enemy]] = [[Poo(0, 0) for y in range(1, 9)] for x in range(1, 5)]
 
-    for y in range(len(enemy_array)):
-        for enemy in enemy_array[y]:
-            print(f"enemy index {enemy_array[y].index(enemy)}")
-            enemy.posY = 1 if y == 0 + enemy.image.get_width() \
-                else (enemy.image.get_height() * 2 * y)
-            enemy.posX = 1 if enemy_array[y].index(enemy) == 0 + enemy.image.get_height() \
-                else (enemy.image.get_width() * 3 * enemy_array[y].index(enemy))
+    current_width = PooEnemy.images[0].get_width()
+    current_height = PooEnemy.images[0].get_height()
+    for y in range(5):
+        for x in range(9):
+            pos_y = 1 if y == 0  \
+                else (current_height * 2 * y)
+            pos_x = 1 if x == 0 \
+                else (current_width * 3 * x)
+            PooEnemy(pos_x, pos_y)
+            print(f"Posiciones X: {pos_x} Y: {pos_y}")
 
-    while True:
+
+    while player.alive():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT:
-                    increaseX = 3
-                    #print(stackX)
-                if event.key == pygame.K_LEFT:
-                    increaseX = -3
-                    #print(stackX)
-                if event.key == pygame.K_SPACE:
-                     projectile_array.append(Paper(stackX, stackY-stack.get_height()))
-            if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
-                        increaseX = 0
+            if event.type and hasattr(event, 'key'):
+                player.player_movement(event.type, event.key)
 
-        if(stackX >= 0
-            and stackX + increaseX >= 0
-            and stackX <= screen.get_width()-stack.get_width()
-            and stackX + stack.get_width() + increaseX <= screen.get_width()):
-            #print( f"stackX: {stackX + stack.get_width()} \n with_increase: {stackX+ stack.get_width() +increaseX}\n current screen width: {screen.get_width()}")
-            stackX += increaseX
+        if not player.is_sound_played:
+            screen.fill((0, 0, 0))
 
+            enemy_group.update(screen=screen)
+            player_missiles.update(screen=screen)
 
+            screen.blit(background, (0, 0))
+            enemy_group.draw(screen)
+            player_group.update()
+            player_group.draw(screen)
+            player_missiles.draw(screen)
+            collision = pygame.sprite.groupcollide(enemy_group, player_missiles, True, True)
+            if collision:
+                for key in dict.keys(collision):
+                    sprite: Paper = collision[key][0]
+                    sprite.play_plop()
+                    Explosion(sprite.rect.x, sprite.rect.y)
+            player_collision = pygame.sprite.spritecollide(player, enemy_group, False)
+            if player_collision:
+                player.play_flush()
+            explosions_group.draw(screen)
+            explosions_group.update()
+            pygame.display.update()
+            clock.tick(60)
+        else:
+            player.update()
 
-
-
-        screen.fill((0, 0, 0))
-
-        for y in range(len(enemy_array)):
-            for enemy in enemy_array[y]:
-                
-                enemy.movement(screen)
-                screen.blit(enemy.image, (enemy.posX, enemy.posY))
-
-        screen.blit(stack, (stackX, stackY))
-        for projectile                   in projectile_array:
-            screen.blit(projectile.image, (projectile.posX,       projectile.posY))
-            projectile.posY -= 1
-            if(projectile.posY < 0):
-                projectile_array.remove(projectile)
-        pygame.display.update()
-        #print(f"current heap: {(current_heap.heap().size/1024)/1024}MB")
-        #print(f"current RAM usage: {(psutil.Process(os.getpid()).memory_info().rss/1024)/1024}MB")
-
-
-class Entity:
-    def __init__(self, X: int, Y:int, image: Surface):
-        self.posX = X
-        self.posY = Y
-        self.image = image
-
-
-class Enemy(Entity):
-    def __init__(self, X: int, Y:int, image: Surface, accel: int = 0.5):
-        super().__init__(X, Y, image)
-        self.accel = accel
-
-    def attack(self, screen):
-        pass
-
-    def movement(self, screen):
-        pass
-
-
-class Poo(Enemy):
-    def __init__(self, X: int, Y:int, accel: int = 0.2):
-        super().__init__(X, Y, pygame.image.load("./poo.png").convert(), accel)
-        self.enemyRight = True
-
-    def movement(self, screen):
-        if (self.posX >= 0
-                and self.posX + self.image.get_width() <= screen.get_width()):
-            if (self.enemyRight and self.posX + self.image.get_width() + self.accel <= screen.get_width()):
-                self.posX += self.accel
-            elif (self.enemyRight == False and self.posX - self.accel >= 0):
-                self.posX -= self.accel
-            if (self.posX == 0
-                    or self.posX - self.accel < 0
-                    or self.posX + self.image.get_width() == screen.get_width()
-                    or self.posX + self.image.get_width() + self.accel > screen.get_width()):
-                self.enemyRight = not self.enemyRight
-                self.posY += 10
-                # print(f"enemyY {enemyY}")
-
-
-class Paper(Entity):
-    def __init__(self, X: int, Y:int ):
-        super().__init__(X, Y, pygame.image.load("./toilet-paper.png").convert())
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
+    start_game('PyCharm')

@@ -1,3 +1,2 @@
 guppy3==3.1.2
-psutil==5.8.0
 pygame==2.1.0
