@@ -1,0 +1,5 @@
+altgraph==0.17.2
+guppy3==3.1.2
+pygame==2.1.0
+pyinstaller==4.7
+pyinstaller-hooks-contrib==2021.3

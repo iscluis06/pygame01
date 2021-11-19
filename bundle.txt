@@ -1,0 +1,10 @@
+pyinstaller \
+--add-data 'bathroom.jpg:.' \
+--add-data 'explosion.png:.' \
+--add-data 'poo.png:.' \
+--add-data 'toilet-paper.png:.' \
+--add-data 'toilet-paper-stack.png:.' \
+--add-data 'fart.wav:.' \
+--add-data 'splat.wav:.' \
+--add-data 'toilet.wav:.' \
+--onefile main.py

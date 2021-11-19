@@ -22,18 +22,18 @@ def start_game(name):
     player_group, enemy_group, player_missiles, explosions_group = Group(), Group(), Group(), Group()
 
     # Sound loading
-    fart = pygame.mixer.Sound("./fart.wav")
-    splat = pygame.mixer.Sound("./splat.wav")
+    fart = pygame.mixer.Sound(resource_path("fart.wav"))
+    splat = pygame.mixer.Sound(resource_path("splat.wav"))
 
     # Cargando imagenes
-    explosion = pygame.image.load("./explosion.png")
-    background = pygame.image.load("./bathroom.jpg")
+    explosion = pygame.image.load(resource_path("explosion.png"))
+    background = pygame.image.load(resource_path("bathroom.jpg"))
     background = pygame.transform.scale(background, (screen.get_width(), screen.get_height()))
-    poo = pygame.image.load("./poo.png").convert()
-    paper = pygame.image.load("./toilet-paper.png").convert()
+    poo = pygame.image.load(resource_path("poo.png")).convert()
+    paper = pygame.image.load(resource_path("toilet-paper.png")).convert()
     Explosion.images = [explosion]
     PooEnemy.images = [poo]
-    Player.images = [pygame.image.load("./toilet-paper-stack.png").convert(paper)]
+    Player.images = [pygame.image.load(resource_path("toilet-paper-stack.png")).convert(paper)]
     Paper.images = [pygame.transform.scale(paper,(38, 38))]
 
     Paper.sound = fart
@@ -102,6 +102,17 @@ def create_enemies(level):
                 else (current_width * 3 * x)
             PooEnemy(pos_x, pos_y, level)
             print(f"Posiciones X: {pos_x} Y: {pos_y}")
+
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
